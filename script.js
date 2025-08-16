@@ -1,11 +1,12 @@
-// Load profile
+// --- Load profile ---
 fetch('profile.json')
     .then(response => response.json())
-    .then(data => {
-        document.getElementById('profile-data').textContent = JSON.stringify(data, null, 2);
+    .then(profile => {
+        document.getElementById('user-name').textContent = profile.username;
+        document.getElementById('user-bio').textContent = profile.bio;
     });
 
-// Notes CRUD
+// --- Notes CRUD ---
 let notes = JSON.parse(localStorage.getItem('notes')) || [];
 let deletedNotes = JSON.parse(localStorage.getItem('deletedNotes')) || [];
 
@@ -17,14 +18,30 @@ function renderNotes() {
     notes.forEach((note, index) => {
         const div = document.createElement('div');
         div.className = 'note';
-        div.textContent = note;
+
+        const textSpan = document.createElement('span');
+        textSpan.textContent = note;
+
+        const btnContainer = document.createElement('div');
+
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = 'Copy';
+        copyBtn.onclick = () => navigator.clipboard.writeText(note);
+
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = 'Delete';
         deleteBtn.onclick = () => deleteNote(index);
-        div.appendChild(deleteBtn);
+
+        btnContainer.appendChild(copyBtn);
+        btnContainer.appendChild(deleteBtn);
+
+        div.appendChild(textSpan);
+        div.appendChild(btnContainer);
+
         notesList.appendChild(div);
     });
 
+    // Deleted notes
     deletedNotesList.innerHTML = '';
     deletedNotes.forEach(note => {
         const div = document.createElement('div');
@@ -35,6 +52,29 @@ function renderNotes() {
 }
 
 function addNote() {
+    const note = prompt('Write your note:');
+    if(note) {
+        notes.push(note);
+        saveNotes();
+        renderNotes();
+    }
+}
+
+function deleteNote(index) {
+    deletedNotes.push(notes[index]);
+    notes.splice(index, 1);
+    saveNotes();
+    renderNotes();
+}
+
+function saveNotes() {
+    localStorage.setItem('notes', JSON.stringify(notes));
+    localStorage.setItem('deletedNotes', JSON.stringify(deletedNotes));
+}
+
+document.getElementById('add-note').addEventListener('click', addNote);
+
+renderNotes();function addNote() {
     const note = prompt('Write a new note:');
     if(note) {
         notes.push(note);
