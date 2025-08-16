@@ -3,29 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Notes App</title>
+    <title>RedInk</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <div class="app-container">
         <header>
-            <h1>My Notes App</h1>
+            <h1>RedInk</h1>
+            <div class="user-info">
+                <h2 id="user-name"></h2>
+                <p id="user-bio"></p>
+            </div>
         </header>
-        
-        <section class="profile">
-            <h2>User Profile</h2>
-            <pre id="profile-data"></pre>
+
+        <section class="notes-section">
+            <h3>My Notes</h3>
+            <button id="add-note">+ Add New Note</button>
+            <div id="notes-list" class="notes-list"></div>
         </section>
 
-        <section class="notes">
-            <h2>Notes</h2>
-            <button id="add-note">Add New Note</button>
-            <div id="notes-list"></div>
-        </section>
-
-        <section class="deleted-notes">
-            <h2>Deleted Notes</h2>
-            <div id="deleted-notes-list"></div>
+        <section class="deleted-section">
+            <h3>Deleted Notes</h3>
+            <div id="deleted-notes-list" class="notes-list"></div>
         </section>
     </div>
 
