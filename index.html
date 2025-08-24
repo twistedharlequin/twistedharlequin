@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Personal Site</title>
+<style>
+  /* ===== Global ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    background:#000; color:#eee; text-align:center; overflow-x:hidden;
+  }
+  .container { max-width: 980px; margin: 0 auto; padding: 24px 16px; }
+
+  /* ===== Loading (real, hide on window load) ===== */
+  #loading {
+    position: fixed; inset: 0; background:#000; display:flex; gap:16px;
+    align-items:center; justify-content:center; flex-direction:column; z-index: 10000;
+  }
+  .spinner {
+    width:56px; height:56px; border-radius:50%;
+    border:6px solid #222; border-top-color:#666; animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== Subtle WIND background ===== */
+  body::before{
+    content:""; position:fixed; left:0; top:0; height:100%; width:300%;
+    background: repeating-linear-gradient(
+      -45deg,
+      rgba(255,255,255,0.05) 0px,
+      rgba(255,255,255,0.05) 8px,
+      transparent 8px,
+      transparent 24px
+    );
+    animation: windMove 15s linear infinite; opacity:.35; z-index:-1; pointer-events:none;
+  }
+  @keyframes windMove { 0%{transform:translateX(0)} 100%{transform:translateX(-33%)} }
+
+  /* ===== Profile ===== */
+  .profile { padding: 40px 0 24px; }
+  .avatar{
+    width:128px; height:128px; border-radius:50%; border:3px solid #444;
+    object-fit:cover; display:block; margin: 0 auto 12px;
+  }
+  .name{ font-size: clamp(22px, 6vw, 36px); font-weight: 800; color:#fff; }
+  .bio{ margin-top:6px; color:#b8b8b8; font-size: clamp(13px, 3.5vw, 16px); }
+
+  /* ===== Skills ===== */
+  .skills{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin: 28px 0 10px; }
+  .card{
+    background:#111; padding:18px 22px; border-radius:14px; min-width:220px;
+    box-shadow:0 0 0 1px #1c1c1c inset, 0 10px 24px rgba(0,0,0,.45);
+    transition: transform .2s ease, background .25s ease, box-shadow .25s ease;
+    opacity:0; transform: translateY(20px) scale(.98);
+  }
+  .card.show{ opacity:1; transform: translateY(0) scale(1); }
+  .card:hover{ background:#1c1c1c; transform: translateY(-2px) scale(1.02);
+    box-shadow:0 0 0 1px #2a2a2a inset, 0 14px 28px rgba(0,0,0,.6); }
+
+  /* ===== Socials ===== */
+  .socials{ margin: 26px 0 90px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .sbtn{
+    width:46px; height:46px; border-radius:14px; background:#111; display:inline-grid; place-items:center;
+    color:#ddd; text-decoration:none; box-shadow:0 0 0 1px #1c1c1c inset;
+    transition: transform .2s ease, background .25s ease, color .25s ease;
+  }
+  .sbtn:hover{ background:#1f1f1f; color:#fff; transform: translateY(-2px); }
+
+  /* ===== Floating Chat Launcher ===== */
+  #chat-launch{
+    position: fixed; left:16px; bottom:16px; width:54px; height:54px; border-radius:50%;
+    background:#333; color:#fff; display:grid; place-items:center; font-size:22px; cursor:pointer;
+    border:none; box-shadow:0 10px 24px rgba(0,0,0,.45); z-index:900;
+    transition: background .25s ease, transform .2s ease;
+  }
+  #chat-launch:hover{ background:#555; transform: translateY(-2px); }
+
+  /* ===== Fullscreen Chat Window ===== */
+  #chat {
+    position: fixed; inset:0; background:#0e0e0e; display:none; flex-direction:column; z-index: 950;
+  }
+  .chat-topbar{
+    height:56px; background:#171717; display:flex; align-items:center; justify-content:space-between;
+    padding: 0 12px 0 16px; border-bottom:1px solid #222;
+  }
+  .chat-title{ font-weight:700; color:#fff; }
+  .chat-controls{ display:flex; gap:10px; }
+  .dot{
+    width:18px; height:18px; border-radius:50%; display:inline-block; cursor:pointer; border: none;
+  }
+  .dot.min{ background:#ffbd2e; }
+  .dot.cls{ background:#ff5f56; }
+  .chat-body{ flex:1; overflow-y:auto; padding: 12px 12px 16px; }
+
+  /* message bubbles */
+  .msg{ max-width: 86%; margin: 6px 0; display:flex; gap:8px; align-items:flex-end; }
+  .me{ justify-content:flex-end; margin-left:auto; }
+  .bubble{
+    background:#1b1b1b; padding:10px 12px; border-radius:14px; text-align:left; box-shadow:0 0 0 1px #242424 inset;
+  }
+  .me .bubble{ background:#242424; }
+  .author{ font-size:12px; color:#aaa; margin-bottom:4px; }
+
+  .chat-input{
+    background:#121212; border-top:1px solid #222; padding:10px; display:grid; gap:8px;
+    grid-template-columns: 1fr auto;
+  }
+  .row{ display:flex; gap:8px; }
+  .input, .btn{
+    padding:12px; border:none; border-radius:10px; background:#1d1d1d; color:#fff; width:100%;
+  }
+  .input::placeholder{ color:#777; }
+  .btn{ background:#2f2f2f; cursor:pointer; min-width:96px; }
+  .btn:hover{ background:#505050; }
+
+  /* Minimized bar */
+  #chat.minimized{ height:56px; overflow:hidden; }
+  #chat.minimized .chat-body, #chat.minimized .chat-input { display:none; }
+
+  /* Responsive */
+  @media (max-width: 768px){
+    .card{ min-width:unset; width:100%; }
+    .sbtn{ width:52px; height:52px; }
+  }
+</style>
+</head>
+<body>
+  <!-- Loading -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <div style="color:#bbb;font-size:14px;">Memuat aset…</div>
+  </div>
+
+  <!-- Content -->
+  <main id="app" class="container" style="opacity:0;">
+    <!-- Profile -->
+    <section class="profile">
+      <!-- Ganti src ke foto kamu (lokal atau url). object-fit menjaga proporsi -->
+      <img class="avatar" id="profile-img" src="profile.jpeg" alt="Foto Profil">
+      <h1 class="name" id="profile-name">はいぴる🦇</h1>
+      <p class="bio" id="profile-bio">an angels could be bad</p>
+    </section>
+
+    <!-- Skills -->
+    <section class="skills" id="skills">
+      <div class="card">Full Stack Development</div>
+      <div class="card">Game Creator</div>
+      <div class="card">CyberSecurity</div>
+    </section>
+
+    <!-- Socials (ganti href ke akunmu) -->
+    <section class="socials">
+      <a class="sbtn" href="https://instagram.com/twistedharlequin" target="_blank" aria-label="Instagram" title="Instagram">
+        <!-- simple SVG cam -->
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7zm5 3a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 .002 6.002A3 3 0 0 0 12 9zm5.5-2.75a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5z"/></svg>
+      </a>
+      <a class="sbtn" href="https://tiktok.com/twistedharlequin" target="_blank" aria-label="TikTok" title="TikTok">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M16 3c1.2 1.7 2.6 2.6 4 2.7V9c-1.9 0-3.5-.7-5-1.9V14a6 6 0 1 1-6-6c.3 0 .7 0 1 .1v3a3 3 0 1 0 3 3V3h3z"/></svg>
+      </a>
+      <a class="sbtn" href="https://www.roblox.com/users/4131239064/profile" target="_blank" aria-label="Roblox" title="Roblox">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="m3 7 14-4 4 14-14 4L3 7zm8.5 1.5-2 6 6-2 2-6-6 2z"/></svg>
+      </a>
+      <a class="sbtn" href="https://github.com/twistedharlequin" target="_blank" aria-label="GitHub" title="GitHub">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.9.6-3.6-1.2-3.6-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.6 1.1 1.6 1.1.9 1.6 2.5 1.1 3.1.8.1-.7.4-1.1.7-1.4-2.3-.3-4.8-1.1-4.8-5a4 4 0 0 1 1.1-2.8 3.7 3.7 0 0 1 .1-2.8s.9-.3 2.9 1.1a9.8 9.8 0 0 1 5.2 0c2-1.4 2.9-1.1 2.9-1.1.5 1 .2 2.1.1 2.4a4 4 0 0 1 1.1 2.8c0 3.9-2.5 4.8-4.8 5 .4.3.8 1 .8 2.1v3.1c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>
+      </a>
+    </section>
+  </main>
+
+  <!-- Chat launcher -->
+  <button id="chat-launch" title="Buka Chat" aria-label="Buka Chat">💬</button>
+
+  <!-- Chat fullscreen -->
+  <section id="chat" aria-live="polite">
+    <div class="chat-topbar">
+      <div class="chat-title">Live Chat</div>
+      <div class="chat-controls">
+        <button class="dot min" title="Minimize" aria-label="Minimize"></button>
+        <button class="dot cls" title="Close" aria-label="Close"></button>
+      </div>
+    </div>
+    <div class="chat-body" id="chatBody"></div>
+    <div class="chat-input">
+      <div class="row">
+        <input class="input" id="chatName" type="text" placeholder="Nama Anda" autocomplete="name">
+        <input class="input" id="chatMsg" type="text" placeholder="Ketik pesan…" autocomplete="off">
+      </div>
+      <button class="btn" id="sendBtn">Kirim</button>
+    </div>
+  </section>
+
+<script>
+  // ===== Loading screen: hide when all assets loaded =====
+  window.addEventListener('load', () => {
+    document.getElementById('loading').style.display='none';
+    const app = document.getElementById('app');
+    app.style.opacity = '1';
+  });
+
+  // ===== Mock data for profile (karena tak bisa sync WhatsApp) =====
+  // Edit bagian ini saja untuk update.
+  const profile = {
+    name: "はいぴる🦇",
+    bio: "an angels could be bad",
+    // ganti 'profile.jpg' bila perlu (local file atau URL)
+    photo: "profile.jpg"
+  };
+  document.getElementById('profile-name').textContent = profile.name;
+  document.getElementById('profile-bio').textContent = profile.bio;
+  document.getElementById('profile-img').src = profile.photo;
+
+  // ===== On-scroll animation for skill cards =====
+  const observer = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('show'); } });
+  }, { threshold:.15 });
+  document.querySelectorAll('.card').forEach(el=>observer.observe(el));
+
+  // ===== Chat logic (localStorage) =====
+  const chat = document.getElementById('chat');
+  const launch = document.getElementById('chat-launch');
+  const bodyEl = document.getElementById('chatBody');
+  const nameEl = document.getElementById('chatName');
+  const msgEl  = document.getElementById('chatMsg');
+  const sendBtn= document.getElementById('sendBtn');
+  const btnMin = document.querySelector('.dot.min');
+  const btnCls = document.querySelector('.dot.cls');
+
+  // Load saved name once
+  const savedName = localStorage.getItem('chatName') || '';
+  if(savedName) nameEl.value = savedName;
+
+  // Load messages
+  let messages = [];
+  try { messages = JSON.parse(localStorage.getItem('messages') || '[]'); } catch(e){ messages=[]; }
+  renderMessages();
+
+  // Open / Close / Minimize
+  launch.addEventListener('click', ()=>{ chat.style.display='flex'; chat.classList.remove('minimized'); msgEl.focus(); });
+  btnCls.addEventListener('click', ()=>{ chat.style.display='none'; });
+  btnMin.addEventListener('click', ()=>{ chat.classList.toggle('minimized'); });
+
+  // Save name on change
+  nameEl.addEventListener('change', ()=>{
+    const clean = (nameEl.value||'').replace(/@.*/,'').trim();
+    nameEl.value = clean;
+    localStorage.setItem('chatName', clean);
+  });
+
+  // Send on button / Enter
+  sendBtn.addEventListener('click', send);
+  msgEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); send(); } });
+
+  function send(){
+    let name = (nameEl.value||'').replace(/@.*/,'').trim();
+    const text = (msgEl.value||'').trim();
+    if(!name || !text) return;
+
+    // persist name
+    localStorage.setItem('chatName', name);
+
+    const msg = { id: Date.now(), name, text };
+    messages.push(msg);
+    localStorage.setItem('messages', JSON.stringify(messages));
+    msgEl.value='';
+
+    appendMessage(msg, true);
+    bodyEl.scrollTop = bodyEl.scrollHeight;
+  }
+
+  function renderMessages(){
+    bodyEl.innerHTML='';
+    messages.forEach(m=>appendMessage(m,false));
+    bodyEl.scrollTop = bodyEl.scrollHeight;
+  }
+
+  function appendMessage({name, text}, isMe){
+    const row = document.createElement('div');
+    row.className = 'msg' + (isMe ? ' me' : '');
+    const wrap = document.createElement('div');
+    wrap.className = 'bubble';
+    const author = document.createElement('div');
+    author.className = 'author';
+    author.textContent = name;
+    const content = document.createElement('div');
+    content.textContent = text;
+    wrap.appendChild(author); wrap.appendChild(content);
+    row.appendChild(wrap);
+    bodyEl.appendChild(row);
+  }
+</script>
+</body>
+  </html>
