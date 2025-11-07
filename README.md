@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://media.giphy.com/media/sIIh4VIwG72Bq/giphy.gif" alt="Nyan Cat" width="300"/>
+  <img src="nyan-cat.gif" alt="Nyan Cat" width="300"/>
 </p>
 
 <p align="center">
